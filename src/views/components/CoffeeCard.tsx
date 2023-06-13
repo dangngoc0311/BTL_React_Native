@@ -1,5 +1,5 @@
 import { View, Text, Image, TouchableOpacity, Dimensions, Alert } from 'react-native'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import { StarIcon } from 'react-native-heroicons/solid';
 import {  ShoppingBagIcon } from 'react-native-heroicons/outline';
@@ -7,16 +7,31 @@ import COLORS from '../../consts/colors';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { TouchableHighlight } from 'react-native-gesture-handler';
 import firestore from '@react-native-firebase/firestore';
-
-export default function CoffeeCard({ item,id }: any) {
-    const url:any ="../../assets/"+item.image;
-    console.log(url)
-    console.log(item.image);
-
+import auth from '@react-native-firebase/auth';
+import storage from '@react-native-firebase/storage';
+export default function CoffeeCard({ item}: any) {
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
+    // const [imageUrl, setImageUrl] = useState('');
+    // console.log(item.image);
     const { width } = Dimensions.get("window");
-    const addToCart = (item:any) => {
+    const userId = auth().currentUser?.uid;
+    const addToCart =  async(item:any) => {
+        try {
+            await firestore()
+                .collection('Carts')
+                .doc(userId)
+                .collection('CartItems')
+                .add({
+                    productId: item.id,
+                    quantity: 1,
+                    sizeId: '1',
+                });
+            console.log('Product added to cart');
+        } catch (error) {
+            console.log('Error adding product to cart:', error);
+        }
     };
+ 
     return (
         <TouchableHighlight
             underlayColor={COLORS.white}
@@ -44,11 +59,9 @@ export default function CoffeeCard({ item,id }: any) {
                             height: 150,
                             width: "100%",
                             borderRadius: 30,
-                        }}
-                    >
-                     
+                        }}>
                         <Image
-                            source={require(url)}
+                            source={{ uri: item.image }}
                             style={{
                                 width: "100%",
                                 height: "100%",

@@ -11,16 +11,18 @@ import {
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import COLORS from "../../consts/colors";
-import {  Category, Product } from "../../consts/models";
-import { BellIcon, MagnifyingGlassIcon, MapPinIcon} from "react-native-heroicons/outline";
+import { Category, Product } from "../../consts/models";
+import { BellIcon, MagnifyingGlassIcon, MapPinIcon, ShoppingBagIcon, ShoppingCartIcon } from "react-native-heroicons/outline";
 import CoffeeCard from "../components/CoffeeCard";
 import ApiManager from "../components/ApiManager";
 import firestore from '@react-native-firebase/firestore';
+import storage from '@react-native-firebase/storage';
+
 const avatar = require("../../assets/avatar.png");
 
 const { width } = Dimensions.get("window");
 
-const HomeScreen = () => {
+const HomeScreen = ({ navigation }: any) => {
     const [activeCategory, setActiveCategory] = useState('1');
     const [categories, setCategories] = useState<Category[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
@@ -38,25 +40,34 @@ const HomeScreen = () => {
     };
     const fetchProducts = async () => {
         try {
-            const productsSnapshot = await firestore().collection("Products").get();
-            const products = productsSnapshot.docs.map((doc) => ({
-                id: doc.id,
-                name: doc.data().name,
-                price: doc.data().price,
-                image: doc.data().image,
-                des: doc.data().des,
-                category_id: doc.data().category_id,
-                stars: doc.data().stars
-            }));
+            const productsSnapshot = await firestore().collection('Products').get();
+            const products = [];
+            for (const doc of productsSnapshot.docs) {
+                const data = doc.data();
+                const imageRef = storage().refFromURL(data.image);
+                const imageUrl = await imageRef.getDownloadURL();
+
+                const product = {
+                    id: doc.id,
+                    name: data.name,
+                    price: data.price,
+                    image: imageUrl,
+                    des: data.des,
+                    category_id: data.category_id,
+                    stars: data.stars
+                };
+
+                products.push(product);
+            }
+
             setProducts(products);
         } catch (error) {
-            console.log('Error fetching Products:', error);
+            console.log('Error fetching products:', error);
         }
     };
-
     useEffect(() => {
         fetchCategories();
-       fetchProducts()
+        fetchProducts()
     }, []);
 
     return (
@@ -65,8 +76,8 @@ const HomeScreen = () => {
             <ScrollView
                 style={{
                     padding: COLORS.SPACING,
-                    paddingTop:0,
-                    backgroundColor:COLORS.white
+                    paddingTop: 0,
+                    backgroundColor: COLORS.white
                 }}>
                 <View>
                     <Image
@@ -107,9 +118,9 @@ const HomeScreen = () => {
                                 Sóc Sơn, Hà Nội
                             </Text>
                         </View>
-                        <BellIcon size="27" color="black" />
+                        <ShoppingCartIcon onPress={() => navigation.navigate('Cart')} size="27" color="black" />
                     </View>
-                    <View  style={{
+                    <View style={{
                         marginVertical: 20,
                         marginTop: 10,
                     }}>

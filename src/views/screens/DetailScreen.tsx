@@ -6,13 +6,31 @@ import { ArrowLeftCircleIcon, MinusIcon, PlusIcon, ShoppingBagIcon } from 'react
 import { HeartIcon, StarIcon } from 'react-native-heroicons/solid';
 import COLORS from '../../consts/colors';
 import firestore from '@react-native-firebase/firestore';
-import { Size } from '../../consts/models';
+import auth from '@react-native-firebase/auth';
+import {  Cart, Size } from '../../consts/models';
+
 export default function DetailScreen(props: any) {
     const item = props.route.params.item;
     const navigation = useNavigation();
     const [sizes, setSizes] = useState<Size[]>([]);
-    const [size, setSize] = useState('');
+    const [sizeId, setSizeId] = useState('');
+    const [sizeName, setSizeName] = useState('');
     const [quantity, setQuantity] = useState(1);
+    const userId = auth().currentUser?.uid;
+    const handleCheckout = () => {
+        const cartItems: Cart = {
+            productId: item.id,
+            quantity,
+            sizeId,
+            id: '',
+            productName: item.name,
+            productImage: item.image,
+            productPrice: item.price,
+            sizeName,
+        };
+        const selectedItemsParam = [cartItems] as Cart[];
+        props.navigation.navigate('Checkout', { selectedItems: selectedItemsParam });
+    }
     const fetchSizes = async () => {
         try {
             const sizeSnapshot = await firestore().collection("Sizes").get();
@@ -34,7 +52,46 @@ export default function DetailScreen(props: any) {
     const increaseQuantity = () => {
         setQuantity(quantity + 1);
     };
-
+    const addToCart = async () => {
+        const cartSnapshot = await firestore()
+            .collection('Carts')
+            .doc(userId)
+            .collection('CartItems')
+            .get();
+        const existingCartItem = cartSnapshot.docs.find(
+            (doc) =>
+                doc.data().productId === item.id && doc.data().sizeId === sizeId
+        );
+        if (existingCartItem) {
+            // Update the quantity if the product with the same size already exists in the cart
+            const existingQuantity = existingCartItem.data().quantity;
+            await firestore()
+                .collection('Carts')
+                .doc(userId)
+                .collection('CartItems')
+                .doc(existingCartItem.id)
+                .update({
+                    quantity: existingQuantity + quantity,
+                });
+            console.log('Quantity updated in Firestore');
+        } else {
+            try {
+                await firestore()
+                    .collection('Carts')
+                    .doc(userId)
+                    .collection('CartItems')
+                    .add({
+                        productId: item.id,
+                        quantity: quantity,
+                        sizeId: sizeId,
+                    });
+                console.log('Product added to cart');
+            } catch (error) {
+                console.log('Error adding product to cart:', error);
+            }
+        }
+    };
+   
     useEffect(() => {
         fetchSizes();
     }, []);
@@ -67,7 +124,7 @@ export default function DetailScreen(props: any) {
                             flexDirection: 'row',
                             justifyContent: 'center'
                         }}>
-                        <Image source={require('../../assets/coffee1.png')} style={{ height: 250, width: 250 }} />
+                        <Image source={{ uri: item.image }} style={{ height: 250, width: 250 }} />
                     </View>
                     <View style={{
                         backgroundColor: COLORS.bgLight, display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', borderRadius: 24, paddingHorizontal: 8, marginHorizontal: 16, opacity: 0.9,
@@ -95,15 +152,18 @@ export default function DetailScreen(props: any) {
                             {sizes.map((sizeItem) => (
                                 <TouchableOpacity
                                     key={sizeItem.id}
-                                    onPress={() => setSize(sizeItem.name)}
+                                    onPress={() => {
+                                        setSizeId(sizeItem.id);
+                                        setSizeName(sizeItem.name);
+                                    }}
                                     style={{
-                                        backgroundColor: size === sizeItem.name ? COLORS.bgLight : 'rgba(0,0,0,0.07)',
+                                        backgroundColor: sizeId === sizeItem.id ? COLORS.bgLight : 'rgba(0,0,0,0.07)',
                                         padding: 12,
                                         borderRadius: 9999,
                                         marginBottom: 10,
                                         paddingHorizontal:20
                                     }}>
-                                    <Text style={{ color: size === sizeItem.name ? 'white' : '#4B5563' }}>
+                                    <Text style={{ color: sizeId === sizeItem.id ? 'white' : '#4B5563' }}>
                                         {sizeItem.name}
                                     </Text>
                                 </TouchableOpacity>
@@ -140,10 +200,10 @@ export default function DetailScreen(props: any) {
 
                         {/* buy now button */}
                         <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
-                            <TouchableOpacity style={{ padding: 8, borderRadius: 9999, borderWidth: 1, borderColor: '#6B7280' }}>
+                            <TouchableOpacity onPress={addToCart} style={{ padding: 8, borderRadius: 9999, borderWidth: 1, borderColor: '#6B7280' }}>
                                 <ShoppingBagIcon size="30" color="gray" />
                             </TouchableOpacity>
-                            <TouchableOpacity style={{ backgroundColor: COLORS.bgLight, padding: 4, borderRadius: 9999 }}>
+                            <TouchableOpacity style={{ backgroundColor: COLORS.bgLight, padding: 4, borderRadius: 9999 }} onPress={() => handleCheckout()} >
                                 <Text style={{ textAlign: 'center', fontWeight: 'bold', color: COLORS.white, fontSize: 16, lineHeight: 28, paddingHorizontal: 120, paddingVertical: 7 }}>Buy now</Text>
                             </TouchableOpacity>
                         </View>

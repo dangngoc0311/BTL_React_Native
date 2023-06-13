@@ -10,7 +10,7 @@ import auth from '@react-native-firebase/auth';
 
 
 const SignupScreen = ({ navigation }: any) => {
-    const [isPasswordShown, setIsPasswordShown] = useState(false);
+    const [isPasswordShown, setIsPasswordShown] = useState(true);
     const [isChecked, setIsChecked] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -81,7 +81,9 @@ const SignupScreen = ({ navigation }: any) => {
                         borderBottomWidth: 1,
                         backgroundColor: '#fff',
                         borderColor: COLORS.grey,
-                        paddingLeft: 35
+                        paddingLeft: 35,
+                        color: COLORS.black,
+                        fontSize: 18
                     }}
 
                     ></TextInput>
@@ -98,15 +100,17 @@ const SignupScreen = ({ navigation }: any) => {
                         borderBottomWidth: 1,
                         backgroundColor: '#fff',
                         borderColor: COLORS.grey,
-                        paddingLeft: 35
+                        paddingLeft: 35, 
+                        color: COLORS.black,
+                        fontSize: 18
                     }}></TextInput>
-                    <Text style={{ color: 'red' }}>{errPassword}</Text>
+                    <Text style={{ color: 'red', fontSize:16 }}>{errPassword}</Text>
                     <TouchableOpacity
                         onPress={() => setIsPasswordShown(!isPasswordShown)}
                         style={{
                             position: "absolute",
                             right: 5,
-                            bottom: 10
+                            bottom: 28
                         }}
                     >
                         {
@@ -126,7 +130,7 @@ const SignupScreen = ({ navigation }: any) => {
                     , marginTop: 15
                 }}>
                     <CheckBox disabled={false} value={isChecked} onValueChange={() => setIsChecked(!isChecked)} tintColors={{ true: COLORS.bgLight }}></CheckBox>
-                    <Text>I aggree to the terms and conditions</Text>
+                    <Text style={{ color: COLORS.black, fontSize: 16 }}>I aggree to the terms and conditions</Text>
                 </View>
             </View>
             <PrimaryButton onPress={() => signUpSubmit()}
@@ -148,7 +152,7 @@ const SignupScreen = ({ navigation }: any) => {
                     }}>Login</Text>
                 </Pressable>
             </View>
-            <View>
+            {/* <View>
                 <View style={{ height: 200 }}>
                     <Image
                         style={{
@@ -160,7 +164,7 @@ const SignupScreen = ({ navigation }: any) => {
                         source={require('../../assets/onboard.png')}
                     />
                 </View>
-            </View>
+            </View> */}
         </SafeAreaView>
     )
 }

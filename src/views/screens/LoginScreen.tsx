@@ -3,7 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import COLORS from '../../consts/colors';
 import { View, TextInput, TouchableOpacity, Image, Pressable, Alert } from 'react-native';
 import { Text } from 'react-native';
-import { EyeDropperIcon, EyeIcon, EyeSlashIcon, LockClosedIcon, UserIcon } from 'react-native-heroicons/solid';
+import { EyeDropperIcon, EyeIcon, EyeSlashIcon, InboxIcon, LockClosedIcon, UserIcon } from 'react-native-heroicons/solid';
 import CheckBox from '@react-native-community/checkbox';
 import { PrimaryButton } from '../components/Button';
 import { PhoneIcon } from 'react-native-heroicons/outline';
@@ -13,7 +13,7 @@ import auth from '@react-native-firebase/auth';
 // import firebase from 'react-native-firebase'
 
 const LoginScreen = ({ navigation }: any) => {
-    const [isPasswordShown, setIsPasswordShown] = useState(false);
+    const [isPasswordShown, setIsPasswordShown] = useState(true);
     const [isChecked, setIsChecked] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -53,16 +53,18 @@ const LoginScreen = ({ navigation }: any) => {
                 <View style={{
                     marginTop: 15
                 }}>
-                    <PhoneIcon size={25} color={COLORS.dark} style={{
+                    <InboxIcon size={25} color={COLORS.dark} style={{
                         position: 'absolute',
                         top: 10,
                         zIndex: 999
-                    }}></PhoneIcon>
+                    }}></InboxIcon>
                     <TextInput placeholder='Email' onChangeText={(value) => setEmail(value)} style={{
                         borderBottomWidth: 1,
                         backgroundColor: '#fff',
                         borderColor: COLORS.grey,
-                        paddingLeft: 35
+                        paddingLeft: 35,
+                        color: COLORS.black,
+                        fontSize:18
                     }}
                         keyboardType='email-address'
                     ></TextInput>
@@ -79,7 +81,9 @@ const LoginScreen = ({ navigation }: any) => {
                         borderBottomWidth: 1,
                         backgroundColor: '#fff',
                         borderColor: COLORS.grey,
-                        paddingLeft: 35
+                        paddingLeft: 35,
+                        color:COLORS.black,
+                        fontSize:18
                     }}></TextInput>
                     <TouchableOpacity
                         onPress={() => setIsPasswordShown(!isPasswordShown)}
@@ -103,10 +107,10 @@ const LoginScreen = ({ navigation }: any) => {
                     flexDirection: 'row',
                     alignItems:'center',
                     marginBottom:30
-                    ,marginTop:15
+                    ,marginTop:15,
                 }}>
                     <CheckBox disabled={false} value={isChecked} onValueChange={() => setIsChecked(!isChecked)} tintColors={{ true: COLORS.bgLight }}></CheckBox>
-                    <Text>Remember me</Text>
+                    <Text style={{color:COLORS.black,fontSize:16}}>Remember me</Text>
                 </View>
             </View>
             <PrimaryButton onPress={() => loginSubmit()}
@@ -128,7 +132,7 @@ const LoginScreen = ({ navigation }: any) => {
                     }}>Singup</Text>
                 </Pressable>
             </View>
-            <View>
+            {/* <View>
                 <View style={{ height: 200 }}>
                     <Image
                         style={{
@@ -139,7 +143,7 @@ const LoginScreen = ({ navigation }: any) => {
                         source={require('../../assets/onboard.png')}
                     />
                 </View>
-            </View>
+            </View> */}
         </SafeAreaView>
     )
 }
