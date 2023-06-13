@@ -6,8 +6,7 @@ import { EyeDropperIcon, EyeIcon, EyeSlashIcon, InboxIcon, LockClosedIcon, Phone
 import CheckBox from '@react-native-community/checkbox';
 import { PrimaryButton } from '../components/Button';
 import auth from '@react-native-firebase/auth';
-
-
+import Toast from 'react-native-simple-toast';
 
 const SignupScreen = ({ navigation }: any) => {
     const [isPasswordShown, setIsPasswordShown] = useState(true);
@@ -49,14 +48,36 @@ const SignupScreen = ({ navigation }: any) => {
         auth()
             .createUserWithEmailAndPassword(formData.email, formData.password)
             .then(() => {
-                console.log('User account created & signed in!');
+                navigation.navigate('Login');
+                Toast.showWithGravity(
+                    'User account created',
+                    Toast.LONG,
+                    Toast.TOP, {
+                    backgroundColor: 'green',
+                    textColor: 'white'
+                });
+                console.log('User account created');
             })
             .catch(error => {
                 if (error.code === 'auth/email-already-in-use') {
+                    Toast.showWithGravity(
+                        'That email address is already in use!',
+                        Toast.LONG,
+                        Toast.TOP, {
+                        backgroundColor: 'red',
+                        textColor: 'white'
+                    });
                     console.log('That email address is already in use!');
                 }
 
                 if (error.code === 'auth/invalid-email') {
+                    Toast.showWithGravity(
+                        'That email address is invalid!',
+                        Toast.LONG,
+                        Toast.TOP, {
+                        backgroundColor: 'red',
+                        textColor: 'white'
+                    });
                     console.log('That email address is invalid!');
                 }
 

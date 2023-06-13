@@ -17,12 +17,12 @@ import CoffeeCard from "../components/CoffeeCard";
 import ApiManager from "../components/ApiManager";
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
-
-const avatar = require("../../assets/avatar.png");
+import auth from '@react-native-firebase/auth';
 
 const { width } = Dimensions.get("window");
 
 const HomeScreen = ({ navigation }: any) => {
+    const [isDivVisible, setDivVisible] = useState(false);
     const [activeCategory, setActiveCategory] = useState('1');
     const [categories, setCategories] = useState<Category[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
@@ -36,6 +36,18 @@ const HomeScreen = ({ navigation }: any) => {
             setCategories(categories);
         } catch (error) {
             console.log('Error fetching categories:', error);
+        }
+    };
+    const handleClick = () => {
+        setDivVisible(!isDivVisible);
+    };
+    const handleLogout = async () => {
+        try {
+            auth().currentUser?.delete();
+            await auth().signOut();
+            navigation.navigate('Login', { email:'',password:'' }); 
+        } catch (error) {
+            console.log('Error logging out:', error);
         }
     };
     const fetchProducts = async () => {
@@ -95,13 +107,27 @@ const HomeScreen = ({ navigation }: any) => {
                         alignItems: 'center',
                         marginVertical: 12,
                     }}>
-                        <Image source={require('../../assets/avatar.png')}
-                            style={{
-                                borderRadius: 999,
-                                height: 36,
-                                width: 36
-                            }} />
-
+                        <View>
+                            <TouchableOpacity onPress={handleClick}>
+                                <Image source={require('../../assets/avatar.png')}
+                                    style={{
+                                        borderRadius: 999,
+                                        height: 36,
+                                        width: 36
+                                    }} />
+                            </TouchableOpacity>
+                            {isDivVisible && (
+                                <View style={{ backgroundColor: COLORS.bgLight, padding: 10, marginTop:5 }}>
+                                    <TouchableOpacity onPress={handleLogout}>
+                                        <Text style={{
+                                            fontWeight: '700',
+                                            fontSize: 14,
+                                            lineHeight: 20,
+                                        }}>Logout</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        </View>
                         <View style={{
                             flexDirection: 'row',
                             justifyContent: 'space-between',
@@ -198,10 +224,10 @@ const HomeScreen = ({ navigation }: any) => {
                             }
                             return coffee.category_id === activeCategory;
                         })
-                        .map((coffee) => (
+                        .map((coffee,index) => (
                             <CoffeeCard
                                 item={coffee}
-                                key={coffee.id}
+                                key={index}
                             />
                         ))}
                 </View>

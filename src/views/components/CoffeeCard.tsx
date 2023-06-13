@@ -9,29 +9,27 @@ import { TouchableHighlight } from 'react-native-gesture-handler';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import storage from '@react-native-firebase/storage';
+import { useCart } from '../../consts/CartContext';
+import { Cart } from '../../consts/models';
+const { width } = Dimensions.get("window");
+
 export default function CoffeeCard({ item}: any) {
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
-    // const [imageUrl, setImageUrl] = useState('');
-    // console.log(item.image);
-    const { width } = Dimensions.get("window");
-    const userId = auth().currentUser?.uid;
-    const addToCart =  async(item:any) => {
-        try {
-            await firestore()
-                .collection('Carts')
-                .doc(userId)
-                .collection('CartItems')
-                .add({
-                    productId: item.id,
-                    quantity: 1,
-                    sizeId: '1',
-                });
-            console.log('Product added to cart');
-        } catch (error) {
-            console.log('Error adding product to cart:', error);
-        }
+    const { addToCart } = useCart();
+    const handleAddToCart = () => {
+        const cartItems: Cart = {
+            productId: item.id,
+            quantity:1,
+            sizeId:'1',
+            id: '',
+            productName: item.name,
+            productImage: item.image,
+            productPrice: item.price,
+            sizeName:'Small'
+        };
+        console.log(cartItems);
+        addToCart(cartItems);
     };
- 
     return (
         <TouchableHighlight
             underlayColor={COLORS.white}
@@ -129,7 +127,7 @@ export default function CoffeeCard({ item}: any) {
                             </Text>
                         </View>
 
-                        <TouchableOpacity onPress={() => addToCart(item)}
+                        <TouchableOpacity onPress={handleAddToCart}
                             style={{
                                 backgroundColor: COLORS.primary,
                                 padding: COLORS.SPACING / 2,

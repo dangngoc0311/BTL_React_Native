@@ -6,15 +6,24 @@ import { MapIcon, MapPinIcon, PhoneIcon } from "react-native-heroicons/outline";
 import { ArrowLeftCircleIcon, InboxIcon } from "react-native-heroicons/solid";
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
+import { useCart } from '../../consts/CartContext';
+import Toast from 'react-native-simple-toast';
+
 const CheckoutScreen = ({ navigation, route }: any) => {
     const [phone, setPhone] = useState('');
     const [address, setAddress] = useState('');
     const [note, setNote] = useState('');
     const selectedItems = route.params.selectedItems;
-    console.log(selectedItems);
+    
+    const type = route.params.type;
+    const { orderCart } = useCart();
+    console.log(type);
     const userId = auth().currentUser?.uid;
     const handlePayment = async () => {
-        try {
+        console.log(type);
+        //detail
+        if (type==1) {
+             try {
             const totalAmount = selectedItems.reduce((total: number, item: any) => total += item.productPrice * item.quantity, 0);
             const orderRef = await firestore().collection('Orders').add({
                 userId,
@@ -33,20 +42,27 @@ const CheckoutScreen = ({ navigation, route }: any) => {
                 quantity: item.quantity,
             }));
             await Promise.all(orderItems.map((item:any) => firestore().collection('OrderItems').add(item)));
-            const cartSnapshot = await firestore()
-                .collection('Carts')
-                .doc(userId)
-                .collection('CartItems')
-                .get();
-            const batch = firestore().batch();
-            cartSnapshot.docs.forEach(doc => batch.delete(doc.ref));
-            await batch.commit();
-
-            console.log('Order placed successfully');
-            // Thực hiện các thao tác khác sau khi đặt hàng thành công
-        } catch (error) {
-            console.log('Error placing order:', error);
-            // Xử lý lỗi nếu có
+                 console.log("Order placed successfully")
+                 Toast.showWithGravity(
+                     'Order placed successfully.',
+                     Toast.LONG,
+                     Toast.TOP, {
+                     backgroundColor: 'green',
+                     textColor: 'white'
+                 });
+                 navigation.navigate('Home');
+             } catch (error) {
+                 Toast.showWithGravity(
+                     'Error placing order.',
+                     Toast.LONG,
+                     Toast.TOP, {
+                     backgroundColor: 'red',
+                     textColor: 'white'
+                 });
+                 console.log('Error placing order:', error);
+             }
+        }else{
+            orderCart(address,phone,note);
         }
     };
  

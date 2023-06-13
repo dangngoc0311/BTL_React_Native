@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity, Image, StatusBar, ScrollView } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import { useNavigation } from '@react-navigation/native'
+import React, { useEffect, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeftCircleIcon, MinusIcon, PlusIcon, ShoppingBagIcon } from 'react-native-heroicons/outline';
 import { HeartIcon, StarIcon } from 'react-native-heroicons/solid';
@@ -8,15 +8,18 @@ import COLORS from '../../consts/colors';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import {  Cart, Size } from '../../consts/models';
+import { useCart } from '../../consts/CartContext';
 
 export default function DetailScreen(props: any) {
     const item = props.route.params.item;
     const navigation = useNavigation();
     const [sizes, setSizes] = useState<Size[]>([]);
-    const [sizeId, setSizeId] = useState('');
-    const [sizeName, setSizeName] = useState('');
+    const [sizeId, setSizeId] = useState('1');
+    const [sizeName, setSizeName] = useState('Small');
     const [quantity, setQuantity] = useState(1);
     const userId = auth().currentUser?.uid;
+    const { addToCart } = useCart();
+    console.log(item)
     const handleCheckout = () => {
         const cartItems: Cart = {
             productId: item.id,
@@ -31,6 +34,21 @@ export default function DetailScreen(props: any) {
         const selectedItemsParam = [cartItems] as Cart[];
         props.navigation.navigate('Checkout', { selectedItems: selectedItemsParam });
     }
+    const handleAddToCart = () => {
+        console.log(item)
+        const cartItems: Cart = {
+            productId: item.id,
+            quantity,
+            sizeId,
+            id: '',
+            productName: item.name,
+            productImage: item.image,
+            productPrice: item.price,
+            sizeName,
+        };
+        console.log(cartItems);
+        addToCart(cartItems);
+    };
     const fetchSizes = async () => {
         try {
             const sizeSnapshot = await firestore().collection("Sizes").get();
@@ -52,46 +70,6 @@ export default function DetailScreen(props: any) {
     const increaseQuantity = () => {
         setQuantity(quantity + 1);
     };
-    const addToCart = async () => {
-        const cartSnapshot = await firestore()
-            .collection('Carts')
-            .doc(userId)
-            .collection('CartItems')
-            .get();
-        const existingCartItem = cartSnapshot.docs.find(
-            (doc) =>
-                doc.data().productId === item.id && doc.data().sizeId === sizeId
-        );
-        if (existingCartItem) {
-            // Update the quantity if the product with the same size already exists in the cart
-            const existingQuantity = existingCartItem.data().quantity;
-            await firestore()
-                .collection('Carts')
-                .doc(userId)
-                .collection('CartItems')
-                .doc(existingCartItem.id)
-                .update({
-                    quantity: existingQuantity + quantity,
-                });
-            console.log('Quantity updated in Firestore');
-        } else {
-            try {
-                await firestore()
-                    .collection('Carts')
-                    .doc(userId)
-                    .collection('CartItems')
-                    .add({
-                        productId: item.id,
-                        quantity: quantity,
-                        sizeId: sizeId,
-                    });
-                console.log('Product added to cart');
-            } catch (error) {
-                console.log('Error adding product to cart:', error);
-            }
-        }
-    };
-   
     useEffect(() => {
         fetchSizes();
     }, []);
@@ -200,7 +178,7 @@ export default function DetailScreen(props: any) {
 
                         {/* buy now button */}
                         <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
-                            <TouchableOpacity onPress={addToCart} style={{ padding: 8, borderRadius: 9999, borderWidth: 1, borderColor: '#6B7280' }}>
+                            <TouchableOpacity onPress={handleAddToCart} style={{ padding: 8, borderRadius: 9999, borderWidth: 1, borderColor: '#6B7280' }}>
                                 <ShoppingBagIcon size="30" color="gray" />
                             </TouchableOpacity>
                             <TouchableOpacity style={{ backgroundColor: COLORS.bgLight, padding: 4, borderRadius: 9999 }} onPress={() => handleCheckout()} >

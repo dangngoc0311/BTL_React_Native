@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import AppNavigation from './src/views/components/NavTab';
 import firestore from '@react-native-firebase/firestore';
+import { CartProvider } from './src/consts/CartContext';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -24,7 +25,9 @@ const App = () => {
     initializeApp();
   }, []);
   return (
-    <AppNavigation />
+     <CartProvider >
+      <AppNavigation />
+    </CartProvider>
   );
 };
 

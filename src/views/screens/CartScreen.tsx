@@ -4,128 +4,27 @@ import { FlatList } from 'react-native-gesture-handler';
 import COLORS from '../../consts/colors';
 import { PrimaryButton } from '../components/Button';
 import { MinusSmallIcon, PlusSmallIcon } from 'react-native-heroicons/solid';
-import { ArrowLeftCircleIcon } from 'react-native-heroicons/outline';
+import { ArrowLeftCircleIcon, TrashIcon } from 'react-native-heroicons/outline';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { Cart } from '../../consts/models';
 import storage from '@react-native-firebase/storage';
+import { useCart } from '../../consts/CartContext';
 
 const CartScreen = ({ navigation }: any) => {
-    const [cartItems, setCartItems] = useState<Cart[]>([]);
-    const [totalPrice, setTotalPrice] = useState<number>(0);
+    // const [cartItems, setCartItems] = useState<Cart[]>([]);
+    // const [totalPrice, setTotalPrice] = useState<number>(0);
     const userId = auth().currentUser?.uid;
-    const fetchCartItems = async () => {
-        try {
-            const cartSnapshot = await firestore()
-                .collection('Carts')
-                .doc(userId)
-                .collection('CartItems')
-                .get();
-            const cartItems: Cart[] = [];
-            let total = 0;
-            for (const doc of cartSnapshot.docs) {
-                const cartItem = doc.data() as Cart;
-                const productSnapshot = await firestore()
-                    .collection('Products')
-                    .doc(cartItem.productId)
-                    .get();
-                const productData = productSnapshot.data();
-                const imageRef = storage().refFromURL(productData?.image);
-                const imageUrl = await imageRef.getDownloadURL();
-                const sizeSnapshot = await firestore()
-                    .collection('Sizes')
-                    .doc(cartItem.sizeId)
-                    .get();
-                const sizeData = sizeSnapshot.data();
-                const cartItemWithDetails: Cart = {
-                    ...cartItem,
-                    id:doc.id,
-                    productName: productData?.name || 'Unknown Product',
-                    productImage: imageUrl || '',
-                    productPrice: productData?.price || 0,
-                    sizeName: sizeData?.name || 'Unknown Size',
-                };
-                total += productData?.price*cartItem.quantity;
-                cartItems.push(cartItemWithDetails);
-            }
-            setTotalPrice(total);
-            setCartItems(cartItems);
-        } catch (error) {
-            console.log('Error fetching cart items:', error);
-        }
-    }
-    const increaseQuantity = async (item: Cart) => {
-        const updatedCartItems = cartItems.map((cartItem) => {
-            if (cartItem.id === item.id) {
-                return {
-                    ...cartItem,
-                    quantity: cartItem.quantity + 1,
-                };
-            }
-            return cartItem;
-        });
-        setCartItems(updatedCartItems);
-        setTotalPrice(totalPrice + item.productPrice);
-        try {
-            await firestore()
-                .collection('Carts')
-                .doc(userId)
-                .collection('CartItems')
-                .doc(item.id)
-                .update({
-                    quantity: item.quantity + 1,
-                });
-            console.log('Quantity updated in Firestore');
-        } catch (error) {
-            console.log('Error updating quantity in Firestore:', error);
-        }
+    const { increaseQuantity,decreaseQuantity,removeCartItem,cartItems,totalPrice } = useCart();
+    const handleDecreaseQuantity = async (item: Cart) => {
+        decreaseQuantity(item);
     };
-
-    const decreaseQuantity = async (item: Cart) => {
-        if (item.quantity > 1) {
-            const updatedCartItems = cartItems.map((cartItem) => {
-                if (cartItem.id === item.id) {
-                    return {
-                        ...cartItem,
-                        quantity: cartItem.quantity - 1,
-                    };
-                }
-                return cartItem;
-            });
-            setCartItems(updatedCartItems);
-            setTotalPrice(totalPrice - item.productPrice);
-            try {
-                await firestore()
-                    .collection('Carts')
-                    .doc(userId)
-                    .collection('CartItems')
-                    .doc(item.id)
-                    .update({
-                        quantity: item.quantity - 1,
-                    });
-                console.log('Quantity updated in Firestore');
-            } catch (error) {
-                console.log('Error updating quantity in Firestore:', error);
-            }
-        }
+    const handleIncreaseQuantity = async (item: Cart) => {
+        increaseQuantity(item);
     };
-    const removeCartItem = async (cartItemId: string) => {
-        try {
-            await firestore()
-                .collection('Carts')
-                .doc(userId)
-                .collection('CartItems')
-                .doc(cartItemId)
-                .delete();
-            console.log('Product removed from cart');
-        } catch (error) {
-            console.log('Error removing product from cart:', error);
-        }
+    const handleRemoveItem = async (id: any) => {
+        removeCartItem(id);
     };
-
-    useEffect(() => {
-        fetchCartItems();
-    }, []);
 
     const CartCard = ({ item }: any) => {
         return (
@@ -138,7 +37,7 @@ const CartScreen = ({ navigation }: any) => {
                         paddingVertical: 20,
                         flex: 1,
                     }}>
-                    <Text style={{ fontWeight: 'bold', fontSize: 16,color:COLORS.black }}>{item.productName}</Text>
+                    <Text style={{ fontWeight: 'bold', fontSize: 16, color: COLORS.black }}>{item.productName}</Text>
                     <Text style={{ fontSize: 13, color: COLORS.grey }}>
                         {item.sizeName}
                     </Text>
@@ -146,10 +45,13 @@ const CartScreen = ({ navigation }: any) => {
                 </View>
                 <View style={{ marginRight: 20, alignItems: 'center' }}>
                     <View style={style.actionBtn}>
-                        <MinusSmallIcon onPress={() => decreaseQuantity(item)} size={25} color={COLORS.white} />
-                        <Text style={{ fontWeight: 'bold', fontSize: 18, color: COLORS.white,paddingHorizontal:6 }}>{item.quantity}</Text>
-                        <PlusSmallIcon onPress={() => increaseQuantity(item)} size={25} color={COLORS.white} />
+                        <MinusSmallIcon onPress={() => handleDecreaseQuantity(item)} size={25} color={COLORS.white} />
+                        <Text style={{ fontWeight: 'bold', fontSize: 18, color: COLORS.white, paddingHorizontal: 6 }}>{item.quantity}</Text>
+                        <PlusSmallIcon onPress={() => handleIncreaseQuantity(item)} size={25} color={COLORS.white} />
                     </View>
+                </View>
+                <View>
+                    <TrashIcon color={'red'} size={25} onPress={() => handleRemoveItem(item.id)}></TrashIcon>
                 </View>
             </View>
         );
@@ -191,7 +93,7 @@ const CartScreen = ({ navigation }: any) => {
                             <Text style={{ fontSize: 18, fontWeight: 'bold',color:COLORS.black }}>${totalPrice}</Text>
                         </View>
                         <View style={{ marginHorizontal: 30 }}>
-                            <PrimaryButton title="CHECKOUT" onPress={() => navigation.navigate('Checkout', { selectedItems: cartItems })} />
+                            <PrimaryButton title="CHECKOUT" onPress={() => navigation.navigate('Checkout', { selectedItems: cartItems})} />
                         </View>
                     </View>
                 )}

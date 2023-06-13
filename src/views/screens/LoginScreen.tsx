@@ -42,7 +42,13 @@ const LoginScreen = ({ navigation }: any) => {
         //     ).catch((err =>
         //         console.log(err)
         //     ));
-        auth().signInWithEmailAndPassword(formData.email, formData.password).then(() => navigation.navigate('Home')).catch(error=>Alert.alert(`Check phone number and password`));
+        auth().signInWithEmailAndPassword(formData.email, formData.password).then(() => {
+            auth().currentUser?.uid;
+            navigation.navigate('Home')
+
+        }
+        )
+        .catch(error=>Alert.alert(`Check phone number and password`));
     }
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white, padding: 30 }}>
